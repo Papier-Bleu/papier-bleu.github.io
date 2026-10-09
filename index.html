@@ -41,6 +41,14 @@ summary::-webkit-details-marker{display:none}
 details ol{margin:6px 0 6px;padding-left:22px;font-size:13px;line-height:1.35}
 details li{margin-bottom:5px}
 footer{padding:20px 0 60px;font-size:13px}
+.hm a,.cap a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+#rd{position:fixed;inset:0;z-index:50;background:rgba(18,18,18,.96);display:none;flex-direction:column}#rd.on{display:flex}
+#rd .rh{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--bg);color:var(--ink);font-size:14px;border-bottom:1px solid var(--ink)}
+#rd .rh a,#rd .rh button{color:var(--ink);font:inherit;background:none;border:0;border-bottom:1px solid var(--ink);padding:0;cursor:pointer;text-decoration:none}
+#rd .rh span{flex:1;min-width:0}#rd .rb{overflow:auto;flex:1;padding:20px 16px 40px}
+#rd .pgs{max-width:860px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:14px}
+#rd .pgs img{width:100%;display:block;background:#fff;box-shadow:0 1px 8px rgba(0,0,0,.35)}
+@media (min-width:700px){#rd .pgs{grid-template-columns:1fr 1fr;gap:0 4px}#rd .pgs img:first-child{grid-column:2}#rd .pgs img{margin-bottom:14px}}
 </style>
 </head>
 <body>
@@ -106,7 +114,7 @@ function ill(e){
 const inn=document.getElementById('in');
 inn.innerHTML=E.map(e=>{
   const names=e.c.map(c=>c.nm).join('<br>');
-  return `<div class="card"><div class="pg"><h4>No. ${e.n} &mdash; ${MO[e.m]} ${e.y}</h4><div class="s">Prose poetry by ten writers</div>${ill(e)}<b>${names}</b><p>Ten writers on ${TH[e.i]}.</p></div><div class="rl"></div><div class="cap"><span class="hl">No. ${e.n}, ${MO[e.m]} ${e.y}</span><br>Print edition, ${ERA[e.g]}<br>${READ[e.n]?`Writers have given permission to share this issue. <a href="${READ[e.n]}" target="_blank" rel="noopener">Read it here</a><br>`:'Print only<br>'}<details><summary>View contributors</summary><ol>${e.c.map(c=>`<li>${c.nm}, ${c.sc} &mdash; <i>${c.t}</i></li>`).join('')}</ol></details>${e.pp||(()=>{const q=rng(e.n*977);return 4*(4+Math.floor(q()*3)+Math.floor(e.i/28)+(q()<.15?2:0))})()} pp.</div></div>`}).join('');
+  return `<div class="card"><div class="pg"><h4>No. ${e.n} &mdash; ${MO[e.m]} ${e.y}</h4><div class="s">Prose poetry by ten writers</div>${ill(e)}<b>${names}</b><p>Ten writers on ${TH[e.i]}.</p></div><div class="rl"></div><div class="cap"><span class="hl">No. ${e.n}, ${MO[e.m]} ${e.y}</span><br>Print edition, ${ERA[e.g]}<br>${READ[e.n]?`Writers have given permission to share this issue. <a href="${READ[e.n]}" data-n="${e.n}" target="_blank" rel="noopener">Read it here</a><br>`:'Print only<br>'}<details><summary>View contributors</summary><ol>${e.c.map(c=>`<li>${c.nm}, ${c.sc} &mdash; <i>${c.t}</i></li>`).join('')}</ol></details>${e.pp||(()=>{const q=rng(e.n*977);return 4*(4+Math.floor(q()*3)+Math.floor(e.i/28)+(q()<.15?2:0))})()} pp.</div></div>`}).join('');
 const tl=document.getElementById('tl');let h='<div class="line"></div>';
 for(let y=Y0;y<=Y1;y++){const l=((y-Y0)*12/N*100).toFixed(2);h+=`<div class="tk" style="left:${l}%"></div><div class="yr" style="left:${l}%">${y}</div>`}
 h+='<div class="tk" style="left:100%"></div>';
@@ -126,9 +134,9 @@ const end=()=>{drag=false;tl.style.cursor=''};
 tl.addEventListener('pointerup',end);tl.addEventListener('pointercancel',end);
 tl.addEventListener('wheel',ev=>{ev.preventDefault();sc.scrollLeft+=(Math.abs(ev.deltaX)>Math.abs(ev.deltaY)?ev.deltaX:ev.deltaY)*3},{passive:false});
 })();
-(function(){const k=Object.keys(READ).map(Number).sort((a,b)=>a-b).map(n=>'No. '+n);
+(function(){const k=Object.keys(READ).map(Number).sort((a,b)=>a-b).map(n=>'<a href="'+READ[n]+'" data-n="'+n+'" target="_blank" rel="noopener">No. '+n+'</a>');
   const list=k.length>1?k.slice(0,-1).join(', ')+' and '+k[k.length-1]:k[0];
-  document.getElementById('perm').textContent=k.length?`Writers have given permission for ${k.length>1?'the following issues':'the following issue'} to be shared for reading: ${list}. All other issues are available in print only.`:'';})();
+  document.getElementById('perm').innerHTML=k.length?`Writers have given permission for ${k.length>1?'the following issues':'the following issue'} to be shared for reading: ${list}. All other issues are available in print only.`:'';})();
 let saved=0;
 function route(){const sub=location.hash==='#submit';
   if(sub&&!document.body.classList.contains('sub'))saved=sc.scrollLeft;
@@ -139,6 +147,25 @@ function route(){const sub=location.hash==='#submit';
 window.addEventListener('hashchange',route);route();
 upd();
 document.querySelectorAll('.nm').forEach(n=>n.textContent=NAME);document.title=NAME+' — Every issue';
+</script>
+<div id="rd" role="dialog" aria-modal="true" aria-label="Issue reader"><div class="rh"><span id="rt"></span><a id="rp" href="#" target="_blank" rel="noopener">Open PDF</a><button id="rx" type="button">Close</button></div><div class="rb" id="rbd"><div class="pgs" id="pgs"></div></div></div>
+<script>
+(function(){
+const NPG={1:20,49:20,73:32};
+const rd=document.getElementById('rd'),pgs=document.getElementById('pgs');
+function openR(n){
+  const e=E[n-1];if(!NPG[n])return;
+  document.getElementById('rt').textContent='No. '+n+', '+MO[e.m]+' '+e.y;
+  document.getElementById('rp').href=READ[n];
+  let h='';for(let i=1;i<=NPG[n];i++)h+='<img loading="lazy" alt="No. '+n+', page '+i+'" src="issues/pages/no-'+n+'/'+String(i).padStart(2,'0')+'.jpg">';
+  pgs.innerHTML=h;document.getElementById('rbd').scrollTop=0;rd.classList.add('on');
+}
+function closeR(){rd.classList.remove('on');pgs.innerHTML=''}
+document.getElementById('rx').addEventListener('click',closeR);
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeR()});
+rd.addEventListener('click',ev=>{if(ev.target===rd)closeR()});
+document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('a[data-n]');if(!a)return;ev.preventDefault();openR(+a.dataset.n)});
+})();
 </script>
 </body>
 </html>
